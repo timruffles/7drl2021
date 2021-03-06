@@ -1,0 +1,40 @@
+[gd_scene load_steps=9 format=2]
+
+[ext_resource path="res://assets/football/ball2.png" type="Texture" id=1]
+[ext_resource path="res://assets/football/ball5.png" type="Texture" id=2]
+[ext_resource path="res://assets/football/ball4.png" type="Texture" id=3]
+[ext_resource path="res://assets/football/ball3.png" type="Texture" id=4]
+[ext_resource path="res://assets/football/ball1.png" type="Texture" id=5]
+[ext_resource path="res://assets/football/ball6.png" type="Texture" id=6]
+
+[sub_resource type="SpriteFrames" id=1]
+animations = [ {
+"frames": [ ExtResource( 5 ) ],
+"loop": true,
+"name": "idle",
+"speed": 5.0
+}, {
+"frames": [ ExtResource( 5 ), ExtResource( 1 ), ExtResource( 4 ), ExtResource( 3 ), ExtResource( 2 ), ExtResource( 6 ) ],
+"loop": true,
+"name": "roll",
+"speed": 5.0
+} ]
+
+[sub_resource type="CircleShape2D" id=2]
+radius = 34.8097
+
+[node name="Ball" type="Node2D"]
+
+[node name="RigidBody2D" type="RigidBody2D" parent="."]
+gravity_scale = 0.0
+contacts_reported = 1
+contact_monitor = true
+
+[node name="AnimatedSprite" type="AnimatedSprite" parent="RigidBody2D"]
+scale = Vector2( 0.25, 0.25 )
+frames = SubResource( 1 )
+animation = "idle"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RigidBody2D"]
+scale = Vector2( 0.25, 0.25 )
+shape = SubResource( 2 )

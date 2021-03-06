@@ -1,26 +1,12 @@
 extends "res://addons/gut/test.gd"
 
-# Declare member variables here. Examples:
-# var a = 2
-# var b = "text"
-
-
-# Called when the node enters the scene tree for the first time.
-func _ready():
-	pass # Replace with function body.
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta):
-#	pass
 
 func test_finds_closest_player():
-	
-	
+	# second player is way closer (x distances are visually much smaller than y)
 	var level = to_level(12, """
 	   e    p
-	 
-	  p
+	   
+	   p
 	""", {
 		e = {
 			type = "enemy"
@@ -31,11 +17,9 @@ func test_finds_closest_player():
 	})
 	
 	var rules = Rules.new(level)
-	print(rules.plan_enemy_moves())
-
-	var moves = [
-		[]
-	]
+	
+	var e = rules.entities_of_type("enemy")[0]
+	assert_eq_deep(rules.plan_enemy_moves(e), PoolVector2Array([Vector2(3,0), Vector2(3,1), Vector2(3,2)]))
 
 func to_level(width, as_string, entities):
 	var lines = remove_text_indent(as_string)
@@ -49,11 +33,8 @@ func to_level(width, as_string, entities):
 				continue
 			var e = entities.get(c, false)
 			assert_not_typeof(e, TYPE_BOOL, "unknown entity ID %s, available %s" % [c, entities.keys()])
-			e = e.duplicate(true)
-			e["x"] = x
-			e["y"] = y
-			output.append(e)
-	return output
+			output.append(Rules.Entity.new(e["type"], Vector2(x,y)))
+	return Rules.Level.new(width, len(lines), output)
 	
 	
 # levels should always start with "\n" and end with "\t\n"

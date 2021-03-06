@@ -76,7 +76,7 @@ func xy_to_astar_id(x, y):
 
 # decides what foes will do
 func plan_enemy_moves(e):
-	var players = level.entities_of_type(PLAYER)
+	var players = entities_of_type(PLAYER)
 	if len(players) == 0:
 		return []
 

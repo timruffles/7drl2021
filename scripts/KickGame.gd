@@ -1,18 +1,20 @@
 extends Node2D
 
-const IDLE = 0
-const AIMING = 1
-const CONFIRMING = 2
-const RESOLVING = 3 # resolve player's moves
-const ENEMIES = 4 # enemies' turn
+const IDLE = "idle"
+const AIMING = "aiming"
+const CONFIRMING = "confirming"
+const RESOLVING = "resolving" # resolve player's moves
+const ENEMIES = "enemies" # enemies' turn
 
 var state_transitions = {}
 var state = IDLE
-
+var resolutionElapsed = 0
 
 func _ready():
 	$KickButton.visible = false
 	$Aimer.visible = false
+	
+	Physics2DServer.set_active(false)
 	
 	state_transitions = {
 		AIMING: {
@@ -21,6 +23,12 @@ func _ready():
 		CONFIRMING: {
 			"enter": funcref(self, "on_enter_confirming"),
 			"exit": funcref(self, "on_exit_confirming"),
+		},
+		RESOLVING: {
+			"enter": funcref(self, "on_enter_resolving"),
+		},
+		ENEMIES: {
+			"enter": funcref(self, "on_enter_enemies"),
 		},
 	}
 
@@ -35,13 +43,20 @@ func _physics_process(delta):
 	if in_state(AIMING):
 		var mouse_pos = get_global_mouse_position()
 		$Aimer.vector = mouse_pos - $Player.position
-
+	elif in_state(RESOLVING):
+		resolutionElapsed += delta
+		var ball = $Ball.get_node("RigidBody2D")
+		# we're done if we've given the ball enough time and it's stopped moving
+		if resolutionElapsed > 0.5 and ball.linear_velocity.length() < 10:
+			enter_state(ENEMIES)
+		
 func in_state(s):
 	return state == s
 	
 func enter_state(entering):
 	var exiting = state
 	state = entering
+	print("transitioning: ", exiting, " -> ", entering)
 	run_state_handler(exiting, "exit")
 	run_state_handler(entering, "enter")
 		
@@ -57,12 +72,21 @@ func on_enter_confirming():
 	$KickButton.visible = true
 	
 func on_exit_confirming():
+	# simulate the result of the player's move
+	Physics2DServer.set_active(true)
 	$Aimer.visible = false
 	$Ball.get_node("RigidBody2D").apply_impulse(Vector2(0,0), $Aimer.vector)
 	$KickButton.visible = false
+	
+func on_enter_resolving():
+	resolutionElapsed = 0
+	
+func on_enter_enemies():
+	Physics2DServer.set_active(false)
+	pass
 
 func _on_KickButton_button_up():
-	enter_state(IDLE)
+	enter_state(RESOLVING)
 
 func _on_Player_selected():
 	if in_state(IDLE):

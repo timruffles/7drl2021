@@ -8,9 +8,14 @@
 
 config_version=4
 
-_global_script_classes=[  ]
+_global_script_classes=[ {
+"base": "Node",
+"class": "Rules",
+"language": "GDScript",
+"path": "res://scripts/Rules.gd"
+} ]
 _global_script_class_icons={
-
+"Rules": ""
 }
 
 [application]
@@ -25,6 +30,10 @@ window/size/width=360
 window/size/height=200
 window/stretch/mode="2d"
 window/stretch/aspect="keep"
+
+[editor_plugins]
+
+enabled=PoolStringArray( "gut" )
 
 [rendering]
 

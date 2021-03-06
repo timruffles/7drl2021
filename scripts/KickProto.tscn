@@ -84,7 +84,9 @@ __meta__ = {
 "_editor_description_": ""
 }
 
-[node name="Mushroom" type="KinematicBody2D" parent="."]
+[node name="Mushroom" type="KinematicBody2D" parent="." groups=[
+"Foes",
+]]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Mushroom"]
 position = Vector2( 67.5, 111.287 )
@@ -101,7 +103,7 @@ script = ExtResource( 13 )
 color = Color( 0.2, 0.976471, 0.301961, 1 )
 
 [node name="Ball" parent="." instance=ExtResource( 3 )]
-position = Vector2( 189.25, 113 )
+position = Vector2( 185, 113.75 )
 
 [node name="KickButton" type="Button" parent="."]
 margin_left = 115.0

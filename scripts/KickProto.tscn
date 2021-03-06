@@ -21,12 +21,12 @@
 [ext_resource path="res://assets/mushroom_med/NormalMushroom_Walk_2.png" type="Texture" id=19]
 [ext_resource path="res://assets/mushroom_med/NormalMushroom_Idle_2.png" type="Texture" id=20]
 [ext_resource path="res://assets/mushroom_med/NormalMushroom_Idle_4.png" type="Texture" id=21]
-[ext_resource path="res://scripts/Game.gd" type="Script" id=22]
+[ext_resource path="res://scripts/KickGame.gd" type="Script" id=22]
 
-[sub_resource type="RectangleShape2D" id=3]
+[sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 6.98052, 9.52416 )
 
-[sub_resource type="SpriteFrames" id=4]
+[sub_resource type="SpriteFrames" id=2]
 animations = [ {
 "frames": [ ExtResource( 15 ), ExtResource( 19 ), ExtResource( 17 ), ExtResource( 18 ) ],
 "loop": true,
@@ -44,7 +44,7 @@ animations = [ {
 "speed": 5.0
 } ]
 
-[sub_resource type="SpriteFrames" id=1]
+[sub_resource type="SpriteFrames" id=3]
 animations = [ {
 "frames": [ ExtResource( 6 ), ExtResource( 5 ), ExtResource( 4 ), ExtResource( 10 ) ],
 "loop": true,
@@ -62,7 +62,7 @@ animations = [ {
 "speed": 5.0
 } ]
 
-[sub_resource type="RectangleShape2D" id=2]
+[sub_resource type="RectangleShape2D" id=4]
 extents = Vector2( 6.98052, 9.52416 )
 
 [node name="KickDungeon" type="Node2D"]
@@ -88,12 +88,31 @@ __meta__ = {
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Mushroom"]
 position = Vector2( 67.5, 111.287 )
-shape = SubResource( 3 )
+shape = SubResource( 1 )
 
 [node name="AnimatedSprite" type="AnimatedSprite" parent="Mushroom"]
 position = Vector2( 67.5, 107 )
-frames = SubResource( 4 )
+frames = SubResource( 2 )
 animation = "idle"
+
+[node name="Aimer" type="Node2D" parent="."]
+position = Vector2( 200, 100 )
+script = ExtResource( 13 )
+color = Color( 0.2, 0.976471, 0.301961, 1 )
+
+[node name="Ball" parent="." instance=ExtResource( 3 )]
+position = Vector2( 189.25, 113 )
+
+[node name="KickButton" type="Button" parent="."]
+margin_left = 115.0
+margin_top = 160.5
+margin_right = 214.0
+margin_bottom = 180.5
+custom_colors/font_color_disabled = Color( 0.12549, 1, 0.345098, 1 )
+text = "Kick!"
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="Player" type="KinematicBody2D" parent="."]
 position = Vector2( 200, 100 )
@@ -101,30 +120,12 @@ input_pickable = true
 script = ExtResource( 12 )
 
 [node name="AnimatedSprite" type="AnimatedSprite" parent="Player"]
-frames = SubResource( 1 )
+frames = SubResource( 3 )
 animation = "idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
 position = Vector2( 0, 4.287 )
-shape = SubResource( 2 )
-
-[node name="Aimer" type="Node2D" parent="Player"]
-script = ExtResource( 13 )
-color = Color( 0.2, 0.976471, 0.301961, 1 )
-
-[node name="Ball" parent="Player" instance=ExtResource( 3 )]
-position = Vector2( -10.75, 13 )
-
-[node name="KickButton" type="Button" parent="Player"]
-margin_left = -85.0
-margin_top = 60.5
-margin_right = 14.0
-margin_bottom = 80.5
-custom_colors/font_color_disabled = Color( 0.12549, 1, 0.345098, 1 )
-text = "Kick!"
-__meta__ = {
-"_edit_use_anchors_": false
-}
+shape = SubResource( 4 )
+[connection signal="button_up" from="KickButton" to="." method="_on_KickButton_button_up"]
 [connection signal="input_event" from="Player" to="Player" method="_on_Player_input_event"]
-[connection signal="mouse_entered" from="Player" to="Player" method="_on_Player_mouse_entered"]
-[connection signal="button_up" from="Player/KickButton" to="Player" method="_on_KickButton_button_up"]
+[connection signal="selected" from="Player" to="." method="_on_Player_selected"]

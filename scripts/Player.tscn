@@ -13,9 +13,9 @@
 
 [sub_resource type="SpriteFrames" id=1]
 animations = [ {
-"frames": [ ExtResource( 7 ), ExtResource( 9 ), ExtResource( 5 ), ExtResource( 4 ) ],
+"frames": [ ExtResource( 3 ), ExtResource( 2 ), ExtResource( 1 ), ExtResource( 8 ) ],
 "loop": true,
-"name": "idle",
+"name": "walk",
 "speed": 5.0
 }, {
 "frames": [ ExtResource( 6 ) ],
@@ -23,9 +23,9 @@ animations = [ {
 "name": "attack",
 "speed": 5.0
 }, {
-"frames": [ ExtResource( 3 ), ExtResource( 2 ), ExtResource( 1 ), ExtResource( 8 ) ],
+"frames": [ ExtResource( 7 ), ExtResource( 9 ), ExtResource( 5 ), ExtResource( 4 ) ],
 "loop": true,
-"name": "walk",
+"name": "idle",
 "speed": 5.0
 } ]
 
@@ -37,7 +37,6 @@ script = ExtResource( 10 )
 __meta__ = {
 "_edit_group_": true
 }
-speed = 100
 
 [node name="AnimatedSprite" type="AnimatedSprite" parent="."]
 frames = SubResource( 1 )

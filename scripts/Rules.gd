@@ -58,6 +58,8 @@ func _generate_astar():
 				for dy in range(-1, 2):
 					if y + dy < 0 or y + dy >= level.height:
 						continue
+					if dx == 0 and dy == 0:
+						continue
 					astar.connect_points(id, xy_to_astar_id(x + dx, y + dy))
 
 func apply_move(eid, delta: Vector2):

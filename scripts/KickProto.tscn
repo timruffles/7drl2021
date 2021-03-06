@@ -87,7 +87,8 @@ animation = "idle"
 position = Vector2( 0, 4.287 )
 shape = SubResource( 2 )
 
-[node name="Tween" type="Tween" parent="."]
+[node name="EnemyTween" type="Tween" parent="."]
 [connection signal="button_up" from="KickButton" to="." method="_on_KickButton_button_up"]
 [connection signal="input_event" from="Player" to="Player" method="_on_Player_input_event"]
 [connection signal="selected" from="Player" to="." method="_on_Player_selected"]
+[connection signal="tween_all_completed" from="EnemyTween" to="." method="_on_EnemyTween_tween_all_completed"]

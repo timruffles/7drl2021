@@ -70,8 +70,9 @@ func _init_positions():
 	
 func level_to_render_vec(lvl: Vector2) -> Vector2:
 	# this needs to be updated when we change the rendering style
-	# wall width
-	return Vector2(lvl.x * TILE_DIMENSIONS, lvl.y * TILE_DIMENSIONS)
+	# offset by 0.5 to center in tile
+	return Vector2((lvl.x + 0.5) * TILE_DIMENSIONS, (lvl.y + 0.5) * TILE_DIMENSIONS)
+	
 	
 	
 
@@ -135,6 +136,13 @@ func on_enter_enemies():
 	next_enemy_move()
 	
 func next_enemy_move():
+	
+	# TODO this is placeholder to demo movement
+	# I think moving over the turn logic to the rules part makes sense to allow for
+	# easier unit testing
+	
+	
+	
 	#var enemyMovePair = enemyTurnState.next()
 	
 	var enemyMovePair = [1,Vector2(1,1)]
@@ -151,7 +159,7 @@ func next_enemy_move():
 
 	rules.apply_move(enemyId, move)
 	
-	var tween = $Tween
+	var tween = $EnemyTween
 	tween.interpolate_property(node, "position",
 		node.position, level_to_render_vec(enemy.position), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	tween.start()
@@ -172,3 +180,9 @@ class EnemyTurnState:
 	
 	func _init():
 		pass
+
+func _on_EnemyTween_tween_all_completed():
+	# TODO continue enemy turns, shouldn't jump straight to another player turn
+	$Ball.position = $Player.position + Vector2(-4, 4)
+	enter_state(IDLE)
+	pass # Replace with function body.

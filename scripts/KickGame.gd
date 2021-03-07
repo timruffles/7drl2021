@@ -2,24 +2,21 @@ extends Node2D
 
 const Mushroom = preload("res://npcs/Mushroom.tscn")
 
-const IDLE = "idle"
+const PLAYER = "player"
 const AIMING = "aiming"
 const CONFIRMING = "confirming"
-const RESOLVING = "resolving" # resolve player's moves
+const RESOLVING_MOVE = "resolving_move" # resolve deterministic move - attack, walk
+const RESOLVING_PHYSICS = "resolving_physics" # running physics
 const ENEMIES = "enemies" # enemies' turn
-
-# signals
-const ENEMY_MOVE_SIGNAL = "emove"
+const GAME_OVER = "game_over"
 
 var state_transitions = {}
-var state = IDLE
+var state = PLAYER
 var resolutionElapsed = 0
 var rules: Rules
 
-var enemyTurnState = EnemyTurnState.new()
-
 # the nodes for each enenmy
-var enemyNodes = {}
+var nodes_by_eid = {}
 
 const TILE_DIMENSIONS = 16
 
@@ -29,10 +26,10 @@ func _ready():
 	
 	var entities = [
 		Rules.Entity.new("player", Vector2(16,10)),
-		Rules.Entity.new("enemy", Vector2(5,3)),
+		Rules.Entity.new("enemy", Vector2(15,9)),
 		Rules.Entity.new("enemy", Vector2(1,2)),
 	]
-	rules = Rules.new(Rules.Level.new(18, 11, entities))
+	rules = Rules.new(18, 11, entities)
 	
 	state_transitions = {
 		AIMING: {
@@ -42,8 +39,12 @@ func _ready():
 			"enter": funcref(self, "on_enter_confirming"),
 			"exit": funcref(self, "on_exit_confirming"),
 		},
-		RESOLVING: {
-			"enter": funcref(self, "on_enter_resolving"),
+		RESOLVING_PHYSICS: {
+			"enter": funcref(self, "on_enter_physics"),
+			"exit": funcref(self, "on_exit_physics"),
+		},
+		RESOLVING_MOVE: {
+			# no behaviour required beyond preventing additional moves during animations
 		},
 		ENEMIES: {
 			"enter": funcref(self, "on_enter_enemies"),
@@ -52,29 +53,30 @@ func _ready():
 
 	_init_positions()
 	
-	# after positioned, turn off physics
-	#Physics2DServer.set_active(false)
-	
+	# only collide the ball in phyiscs state
+	toggle_collisions(false)
+
 func _init_positions():
 	var p = rules.entities_of_type("player")
 	assert(len(p) > 0, "no players!")
-	
+
 	# current only handles first player
 	$Player.position = level_to_render_vec(p[0].position)
-	
+
+	nodes_by_eid[rules.get_player().id] = $Player
+
 	for e in rules.entities_of_type("enemy"):
 		var n = Mushroom.instance()
-		enemyNodes[e.id] = n
+		n.set_entity(e)
+		nodes_by_eid[e.id] = n
 		n.position = level_to_render_vec(e.position)
 		self.add_child(n)
-	
+
 func level_to_render_vec(lvl: Vector2) -> Vector2:
-	# this needs to be updated when we change the rendering style
-	# offset by 0.5 to center in tile
-	return Vector2((lvl.x + 0.5) * TILE_DIMENSIONS, (lvl.y + 0.5) * TILE_DIMENSIONS)
-	
-	
-	
+	return Vector2(lvl.x * TILE_DIMENSIONS, lvl.y * TILE_DIMENSIONS)
+
+func render_to_level_vec(v: Vector2) -> Vector2:
+	return Vector2(v.x / TILE_DIMENSIONS, v.y / TILE_DIMENSIONS)
 
 func _input(event):
 	if event is InputEventMouseButton \
@@ -83,92 +85,158 @@ func _input(event):
 	and in_state(AIMING):
 		enter_state(CONFIRMING)
 
+	if in_state(PLAYER) and event is InputEventKey:
+		handle_player_keyboard(event)
+
+func handle_player_keyboard(event):
+	match event.scancode:
+		KEY_UP:
+			player_move(Vector2(0, -1))
+		KEY_RIGHT:
+			player_move(Vector2(1, 0))
+		KEY_DOWN:
+			player_move(Vector2(0, 1))
+		KEY_LEFT:
+			player_move(Vector2(-1, 0))
+
+func player_move(vector):
+	var move = rules.player_move(vector)
+	if not move:
+		# illegal move etc
+		return
+
+	enter_state(RESOLVING_MOVE)
+
+	match move.type:
+		Rules.WALK_MOVE:
+			_apply_player_walk(move)
+		Rules.ATTACK_MOVE:
+			# TODO animate
+			next_enemy_move()
+		_:
+			assert(false, "TODO handle player move type %s" % move.type)
+			
+	_notify_on_move()
+	
+func _notify_on_move():
+	for n in nodes_by_eid:
+		nodes_by_eid[n].on_move()
+
+func _apply_player_walk(move: Rules.Move):
+	var player = rules.get_player()
+
+	var tween = $PlayerMoveTween
+	tween.interpolate_property($Player, "position",
+		$Player.position, level_to_render_vec(player.position), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+	tween.connect("tween_all_completed", self, "_player_tween_done")
+	tween.start()
+
+func _player_tween_done():
+	enter_state(ENEMIES)
+
 func _physics_process(delta):
 	if in_state(AIMING):
 		var mouse_pos = get_global_mouse_position()
 		$Aimer.vector = mouse_pos - $Player.position
-	elif in_state(RESOLVING):
+	elif in_state(RESOLVING_PHYSICS):
 		resolutionElapsed += delta
 		var ball = $Ball.get_node("RigidBody2D")
 		# we're done if we've given the ball enough time and it's stopped moving
 		# TODO research linear velocity
-		var lv = ball.linear_velocity.length()
-		if (resolutionElapsed > 0.5 and lv < 30) and\
-		   (resolutionElapsed > 2.5 and lv < 150 ): # taking too long!
-			enter_state(ENEMIES)
 		
+		if resolutionElapsed > 1.5:
+			ball.linear_velocity += -ball.linear_velocity * delta * 1
+			ball.angular_velocity *= 1 - (0.1 * delta)
+		var lv = ball.linear_velocity.length()
+		if resolutionElapsed > 1.5 and lv < 30:
+			ball.linear_velocity = Vector2(0,0)
+			ball.angular_velocity = 0
+			enter_state(ENEMIES)
+
 func in_state(s):
 	return state == s
-	
+
 func enter_state(entering):
 	var exiting = state
 	state = entering
 
+	print("transitioning %s -> %s" % [exiting, state])
 	run_state_handler(exiting, "exit")
 	run_state_handler(entering, "enter")
-		
+
 func run_state_handler(state, event):
 	var fn = state_transitions.get(state, {}).get(event, null)
 	if fn:
 		fn.call_func()
-	
+
 func on_enter_aiming():
 	$Aimer.position = $Player.position
 	$Aimer.visible = true
-	
+
 func on_enter_confirming():
 	$KickButton.visible = true
-	
+
 func on_exit_confirming():
 	# simulate the result of the player's move
-	Physics2DServer.set_active(true)
 	$Aimer.visible = false
 	$Ball.get_node("RigidBody2D").apply_impulse(Vector2(0,0), $Aimer.vector)
 	$KickButton.visible = false
-	
-func on_enter_resolving():
-	resolutionElapsed = 0
-	
-func on_enter_enemies():
-	enemyTurnState = EnemyTurnState.new()
-	Physics2DServer.set_active(false)
-	
-	next_enemy_move()
-	
-func next_enemy_move():
-	
-	# TODO this is placeholder to demo movement
-	# I think moving over the turn logic to the rules part makes sense to allow for
-	# easier unit testing
-	
-	
-	
-	#var enemyMovePair = enemyTurnState.next()
-	
-	var enemyMovePair = [1,Vector2(1,1)]
-	# enemy turn done
-	if not enemyMovePair:
-		enter_state(IDLE)
-		return
-		
-	var enemyId = enemyMovePair[0]
-	var move = enemyMovePair[1]
-	
-	var enemy = rules.entities[enemyId]
-	var node = enemyNodes[enemyId]
 
-	rules.apply_move(enemyId, move)
+func on_enter_physics():
+	toggle_collisions(true)
+	resolutionElapsed = 0
+
+func on_exit_physics():
+	toggle_collisions(false)
 	
+func toggle_collisions(on):
+	$Ball.get_node("./RigidBody2D/CollisionShape2D").disabled = !on
+
+func on_enter_enemies():
+	rules.turn()
+	next_enemy_move()
+
+func next_enemy_move():
+	var move = rules.step()
+	# enemy turn done
+	if not move:
+		enter_state(PLAYER)
+		return
+
+	match move.type:
+		Rules.WALK_MOVE:
+			_apply_walk(move)
+		Rules.ATTACK_MOVE:
+			_apply_attack(move)
+
+func _apply_attack(move):
+	var p = rules.get_player()
+	$Heart.set_health(max(p.hp, 0))
+	if p.hp == 0:
+		_player_died()
+	else:
+		next_enemy_move()
+		
+func _player_died():
+	enter_state(GAME_OVER)
+	$PlayerDied.visible = true
+
+func _apply_walk(move):
+	var enemy = rules.entities[move.eid]
+	var node = nodes_by_eid[move.eid]
+
 	var tween = $EnemyTween
 	tween.interpolate_property(node, "position",
 		node.position, level_to_render_vec(enemy.position), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+	tween.connect("tween_all_completed", self, "next_enemy_move")
 	tween.start()
 
+
 func _on_KickButton_button_up():
-	enter_state(RESOLVING)
+	enter_state(RESOLVING_PHYSICS)
 
 func _on_Player_selected():
-	if in_state(IDLE):
+	if in_state(PLAYER):
 		enter_state(AIMING)
 
 # TODO move to Rules
@@ -181,8 +249,3 @@ class EnemyTurnState:
 	func _init():
 		pass
 
-func _on_EnemyTween_tween_all_completed():
-	# TODO continue enemy turns, shouldn't jump straight to another player turn
-	$Ball.position = $Player.position + Vector2(-4, 4)
-	enter_state(IDLE)
-	pass # Replace with function body.

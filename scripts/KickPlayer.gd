@@ -11,3 +11,7 @@ func _on_Player_input_event(_viewport, event, _shape_idx):
 	and event.button_index == BUTTON_LEFT \
 	and event.is_pressed():
 		emit_signal("selected")
+
+func on_move():
+	# nothing required - game over logic handled elsewhere
+	pass

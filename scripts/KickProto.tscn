@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=2]
+[gd_scene load_steps=18 format=2]
 
 [ext_resource path="res://roguelike_tilesheet.tres" type="TileSet" id=1]
 [ext_resource path="res://assets/hero/elf_m_idle_anim_f2.png" type="Texture" id=2]
@@ -13,6 +13,7 @@
 [ext_resource path="res://assets/hero/elf_m_idle_anim_f0.png" type="Texture" id=11]
 [ext_resource path="res://scripts/KickPlayer.gd" type="Script" id=12]
 [ext_resource path="res://scripts/Aimer.gd" type="Script" id=13]
+[ext_resource path="res://scripts/Health.tscn" type="PackedScene" id=14]
 [ext_resource path="res://scripts/KickGame.gd" type="Script" id=22]
 
 [sub_resource type="SpriteFrames" id=1]
@@ -88,7 +89,32 @@ position = Vector2( 0, 4.287 )
 shape = SubResource( 2 )
 
 [node name="EnemyTween" type="Tween" parent="."]
+
+[node name="PlayerMoveTween" type="Tween" parent="."]
+
+[node name="Heart" parent="." instance=ExtResource( 14 )]
+margin_left = -0.100006
+margin_top = -10.7
+margin_right = -0.100006
+margin_bottom = -10.7
+
+[node name="PlayerDied" type="Panel" parent="."]
+visible = false
+light_mask = -2147483647
+margin_left = 13.5
+margin_top = 10.75
+margin_right = 308.5
+margin_bottom = 197.75
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="RichTextLabel" type="RichTextLabel" parent="PlayerDied"]
+margin_left = 34.0
+margin_top = 32.25
+margin_right = 268.0
+margin_bottom = 72.25
+text = "Death has blown the final whistle!"
 [connection signal="button_up" from="KickButton" to="." method="_on_KickButton_button_up"]
 [connection signal="input_event" from="Player" to="Player" method="_on_Player_input_event"]
 [connection signal="selected" from="Player" to="." method="_on_Player_selected"]
-[connection signal="tween_all_completed" from="EnemyTween" to="." method="_on_EnemyTween_tween_all_completed"]

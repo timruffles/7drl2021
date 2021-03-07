@@ -212,7 +212,6 @@ func _generate_astar():
 	for x in range(width):
 		for y in range(height):
 			var id = _xy_to_astar_id(x,y)
-			# squarewise
 			for d in squarewise_deltas:
 				var dx = d[0]
 				var dy = d[1]

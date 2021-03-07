@@ -24,10 +24,11 @@ func _ready():
 	$KickButton.visible = false
 	$Aimer.visible = false
 	
+	# TODO integrate procedural generation of the level
 	var entities = [
 		Rules.Entity.new("player", Vector2(16,10)),
-		Rules.Entity.new("enemy", Vector2(15,9)),
-		Rules.Entity.new("enemy", Vector2(1,2)),
+		Rules.Entity.new("enemy", Vector2(12,6)),
+		Rules.Entity.new("enemy", Vector2(10,8)),
 	]
 	rules = Rules.new(18, 11, entities)
 	

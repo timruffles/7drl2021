@@ -189,6 +189,12 @@ func _apply_attack(m: Move):
 	player.hp -= 1
 
 		
+var squarewise_deltas = [
+	[0,-1],
+	[1,0],
+	[0,1],
+	[-1,0]
+]
 
 func _generate_astar():
 	astar = AStar2D.new()
@@ -206,16 +212,15 @@ func _generate_astar():
 	for x in range(width):
 		for y in range(height):
 			var id = _xy_to_astar_id(x,y)
-			for dx in range(-1, 2):
+			# squarewise
+			for d in squarewise_deltas:
+				var dx = d[0]
+				var dy = d[1]
 				if x + dx < 0 or x + dx >= width:
 					continue
-				for dy in range(-1, 2):
-					if y + dy < 0 or y + dy >= height:
-						continue
-					if dx == 0 and dy == 0:
-						continue
-					astar.connect_points(id, _xy_to_astar_id(x + dx, y + dy))
-					
+				if y + dy < 0 or y + dy >= height:
+					continue
+				astar.connect_points(id, _xy_to_astar_id(x + dx, y + dy))
 
 
 func _sort_by_second_pair_el(pair_a, pair_b):

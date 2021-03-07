@@ -12,6 +12,7 @@ const PLAYER = "player"
 # move types
 const WALK_MOVE = "walk"
 const ATTACK_MOVE = "attack"
+const PUSHED_MOVE = "pushed"
 
 var astar: AStar2D
 var entities = {}
@@ -93,8 +94,38 @@ func is_in_bounds(vec):
  		   vec.x < width && vec.y < height
 	
 # turns the ball-hit back into a series of quantised events
-func ball_hit(eid):
-	pass
+# vector in is direction ball is travelling through the node, like a ray aimed at it
+func ball_hit(eid, ball_through_node_vector):
+	var direction = quantize_vector(ball_through_node_vector)
+	var ent = entities[eid]
+	var resulting_pos = ent.position + direction
+	# TODO do a wall bounce damage thing?
+	if ent and is_in_bounds(resulting_pos):
+		ent.position = resulting_pos
+		return Move.new(eid, resulting_pos, PUSHED_MOVE)
+	return
+
+# quantizes a continuous vector into integer vector
+static func quantize_vector(vec: Vector2) -> Vector2:
+	var r = vec.normalized().rotated(deg2rad(-45))
+	var x = r.x
+	var y = r.y
+	# rotate a quarter, to make checks easy
+	if y < 0:
+		if x >= 0:
+			# right
+			return Vector2(1, 0)
+		else:
+			# up
+			return Vector2(0, -1)
+	else:
+		if x >= 0:
+			# down
+			return Vector2(0, 1)
+		else:
+			# left
+			return Vector2(-1, 0)
+		
 
 # runs an enemy move, and returns a move that describes the change to visualise
 # for the player
@@ -237,11 +268,13 @@ class Entity:
 	var type: String
 	var id
 	var hp = 3
+	var props
 	
-	func _init(typ, pos, i = null):
+	func _init(typ, pos, i = null, p = {}):
 		position = pos
 		type = typ
 		id = i
+		props = p
 
 class Move:
 	# actor eid

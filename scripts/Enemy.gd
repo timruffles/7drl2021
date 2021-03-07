@@ -1,9 +1,7 @@
 extends KinematicBody2D
 
+class_name Enemy
 
-# Declare member variables here. Examples:
-# var a = 2
-# var b = "text"
 var entity: Rules.Entity
 
 func set_entity(e):

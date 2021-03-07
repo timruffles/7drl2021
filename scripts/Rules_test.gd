@@ -43,6 +43,19 @@ func test_enemies_attack_when_close():
 		
 	assert_eq_deep(to_move_data(moves), [walk([1,0], 1), attack([1,0], 1), attack([1,0], 1)])
 	
+func test_quantize_vector():
+	assert_eq(Rules.quantize_vector(Vector2(6, 1)), Vector2(1, 0))
+	
+	
+	var unchanged = [
+		Vector2(1,0),
+		Vector2(0,1),
+		Vector2(-1,0),
+		Vector2(0,-1),
+	]
+	for v in unchanged:
+		assert_eq(Rules.quantize_vector(v), v)
+	
 func walk(position, eid):
 	return Rules.Move.new(eid, Vector2(position[0], position[1]), Rules.WALK_MOVE).as_dict()
 

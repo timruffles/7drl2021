@@ -1,6 +1,7 @@
 extends Node2D
 
 const Mushroom = preload("res://npcs/Mushroom.tscn")
+const Pigeon = preload("res://npcs/Pigeon.tscn")
 
 const PLAYER = "player"
 const AIMING = "aiming"
@@ -17,6 +18,10 @@ var rules: Rules
 
 # the nodes for each enenmy
 var nodes_by_eid = {}
+var enemy_kinds = {
+	pigeon = Pigeon,
+	mushroom = Mushroom,
+}
 
 const TILE_DIMENSIONS = 16
 
@@ -28,7 +33,7 @@ func _ready():
 	var entities = [
 		Rules.Entity.new("player", Vector2(16,10)),
 		Rules.Entity.new("enemy", Vector2(12,6)),
-		Rules.Entity.new("enemy", Vector2(10,8)),
+		Rules.Entity.new("enemy", Vector2(10,8), null, {kind="pigeon"}),
 	]
 	rules = Rules.new(18, 11, entities)
 	
@@ -54,6 +59,7 @@ func _ready():
 
 	_init_positions()
 	
+	$Ball.connect("body_entered", self, "_on_ball_hit")
 	# only collide the ball in phyiscs state
 	toggle_collisions(false)
 
@@ -67,11 +73,35 @@ func _init_positions():
 	nodes_by_eid[rules.get_player().id] = $Player
 
 	for e in rules.entities_of_type("enemy"):
-		var n = Mushroom.instance()
+		var kind = e.props.get("kind", "mushroom")
+		var n = enemy_kinds[kind].instance()
 		n.set_entity(e)
 		nodes_by_eid[e.id] = n
 		n.position = level_to_render_vec(e.position)
 		self.add_child(n)
+		
+func _on_ball_hit(n: Node):
+	if n == $Player:
+		return
+	if n is Enemy:
+
+		var move = rules.ball_hit(n.entity.id, n.position - $Ball.position)
+		if move:
+			match move.type:
+				Rules.PUSHED_MOVE:
+					_apply_push(move)
+				_:
+					pass
+	
+func _apply_push(move):
+	var node = nodes_by_eid[move.eid]
+	var ent = rules.entities[move.eid]
+	
+	# quick push move animation
+	var tween = $EnemyTween
+	tween.interpolate_property(node, "position",
+		node.position, level_to_render_vec(ent.position), 0.2, Tween.TRANS_LINEAR, Tween.EASE_OUT)
+	tween.start()
 
 func level_to_render_vec(lvl: Vector2) -> Vector2:
 	return Vector2(lvl.x * TILE_DIMENSIONS, lvl.y * TILE_DIMENSIONS)
@@ -141,7 +171,7 @@ func _physics_process(delta):
 		$Aimer.vector = mouse_pos - $Player.position
 	elif in_state(RESOLVING_PHYSICS):
 		resolutionElapsed += delta
-		var ball = $Ball.get_node("RigidBody2D")
+		var ball = $Ball
 		# we're done if we've given the ball enough time and it's stopped moving
 		# TODO research linear velocity
 		
@@ -180,7 +210,7 @@ func on_enter_confirming():
 func on_exit_confirming():
 	# simulate the result of the player's move
 	$Aimer.visible = false
-	$Ball.get_node("RigidBody2D").apply_impulse(Vector2(0,0), $Aimer.vector)
+	$Ball.apply_impulse(Vector2(0,0), $Aimer.vector)
 	$KickButton.visible = false
 
 func on_enter_physics():
@@ -191,7 +221,9 @@ func on_exit_physics():
 	toggle_collisions(false)
 	
 func toggle_collisions(on):
-	$Ball.get_node("./RigidBody2D/CollisionShape2D").disabled = !on
+	var cs2d = $Ball.get_node("./CollisionShape2D")
+	cs2d.disabled = !on
+	$Ball.contact_monitor = on
 
 func on_enter_enemies():
 	rules.turn()

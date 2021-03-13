@@ -12,14 +12,14 @@
 
 [sub_resource type="SpriteFrames" id=1]
 animations = [ {
-"frames": [  ],
-"loop": true,
-"name": "attack",
-"speed": 5.0
-}, {
 "frames": [ ExtResource( 7 ), ExtResource( 2 ), ExtResource( 5 ), ExtResource( 1 ) ],
 "loop": true,
 "name": "walk",
+"speed": 5.0
+}, {
+"frames": [  ],
+"loop": true,
+"name": "attack",
 "speed": 5.0
 }, {
 "frames": [ ExtResource( 6 ), ExtResource( 3 ), ExtResource( 4 ), ExtResource( 9 ) ],
@@ -33,7 +33,7 @@ extents = Vector2( 6.98052, 9.52416 )
 
 [node name="Sprite" type="KinematicBody2D"]
 collision_layer = 4
-collision_mask = 15
+collision_mask = 0
 script = ExtResource( 8 )
 __meta__ = {
 "_edit_group_": true

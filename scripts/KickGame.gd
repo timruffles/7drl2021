@@ -11,6 +11,10 @@ const RESOLVING_PHYSICS = "resolving_physics" # running physics
 const ENEMIES = "enemies" # enemies' turn
 const GAME_OVER = "game_over"
 
+# physics layers
+const WALL_LAYER = 0
+const PLAYER_LAYER = 1
+
 var state_transitions = {}
 var state = PLAYER
 var resolutionElapsed = 0
@@ -58,8 +62,19 @@ func _ready():
 	_init_positions()
 	
 	$Ball.connect("body_entered", self, "_on_ball_hit")
+	$Player/Area2D.connect("body_exited", self, "_on_player_exit_ball_check")
+	#$Player/Area2D.connect("body_exited", self, "_on_player_exit_ball_check")
 	# only collide the ball in phyiscs state
 	toggle_collisions(false)
+	
+func _on_player_exit_ball_check(body):
+	# if we started the physics resolution inside the player, we disabled the bit. Now
+	# rennable to allow ball to bounce off player again
+	if in_state(RESOLVING_PHYSICS) and body == $Ball:
+		$Ball.set_collision_mask_bit(PLAYER_LAYER, true)
+		
+func _on_log(n):
+	print(n)
 
 func _init_positions():
 	var p = rules.entities_of_type("player")
@@ -111,7 +126,7 @@ func _input(event):
 	and in_state(AIMING):
 		enter_state(CONFIRMING)
 
-	if in_state(PLAYER) and event is InputEventKey:
+	if in_state(PLAYER) and (event is InputEventKey):
 		handle_player_keyboard(event)
 
 func handle_player_keyboard(event):
@@ -152,7 +167,7 @@ func _apply_player_walk(move: Rules.Move):
 
 	var tween = $PlayerMoveTween
 	tween.interpolate_property($Player, "position",
-		$Player.position, level_to_render_vec(player.position), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		$Player.position, level_to_render_vec(player.position), 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	tween.connect("tween_all_completed", self, "_player_tween_done")
 	tween.start()
 
@@ -191,6 +206,7 @@ func run_state_handler(state, event):
 func on_enter_aiming():
 	$Aimer.position = $Player.position
 	$Aimer.visible = true
+		
 
 func on_enter_confirming():
 	$KickButton.visible = true
@@ -199,7 +215,11 @@ func on_exit_confirming():
 	# simulate the result of the player's move
 	$Aimer.visible = false
 	$Ball.apply_impulse(Vector2(0,0), $Aimer.vector)
+	# TODO once ball has left player, enable player layer mask
 	$KickButton.visible = false
+	
+func _layer_bits(bit_index):
+	return int(pow(2, bit_index))
 
 func on_enter_physics():
 	toggle_collisions(true)
@@ -211,10 +231,13 @@ func on_exit_physics():
 func toggle_collisions(on):
 	# disable collision with players outside of resolution
 	var mask = 0b1111
-	if not on:
+	if on:
+		# avoid colliding with player until we've been kicked off the square
+		if $Player/Area2D.overlaps_body($Ball):
+			mask = mask ^ _layer_bits(PLAYER_LAYER)
+	else:
 		mask = 1
 	$Ball.collision_mask = mask
-	$Ball.contact_monitor = on
 
 func on_enter_enemies():
 	rules.turn()
@@ -224,6 +247,7 @@ func next_enemy_move():
 	var move = rules.step()
 	# enemy turn done
 	if not move:
+		print("no move!")
 		enter_state(PLAYER)
 		return
 
@@ -257,7 +281,7 @@ func _apply_walk(move):
 
 	var tween = $EnemyTween
 	tween.interpolate_property(node, "position",
-		node.position, level_to_render_vec(enemy.position), 0.5, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		node.position, level_to_render_vec(enemy.position), 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	tween.connect("tween_all_completed", self, "next_enemy_move")
 	tween.start()
 

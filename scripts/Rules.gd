@@ -99,7 +99,7 @@ func ball_hit(eid, ball_through_node_vector):
 	var direction = quantize_vector(ball_through_node_vector)
 	var ent = entities[eid]
 	var resulting_pos = ent.position + direction
-	# TODO do a wall bounce damage thing?
+	# TODO do a wall bounce damage thing?/
 	if ent and is_in_bounds(resulting_pos):
 		ent.position = resulting_pos
 		return Move.new(eid, resulting_pos, PUSHED_MOVE)

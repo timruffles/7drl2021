@@ -1,7 +1,7 @@
 extends Node2D
 
-const Mushroom = preload("res://npcs/Mushroom.tscn")
-const Pigeon = preload("res://npcs/Pigeon.tscn")
+const Mushroom = preload("res://scripts/Mushroom.tscn")
+#const Pigeon = preload("res://npcs/Pigeon.tscn")
 
 const PLAYER = "player"
 const AIMING = "aiming"
@@ -16,10 +16,8 @@ var state = PLAYER
 var resolutionElapsed = 0
 var rules: Rules
 
-# the nodes for each enenmy
-var nodes_by_eid = {}
 var enemy_kinds = {
-	pigeon = Pigeon,
+#	pigeon = Pigeon,
 	mushroom = Mushroom,
 }
 
@@ -33,7 +31,7 @@ func _ready():
 	var entities = [
 		Rules.Entity.new("player", Vector2(16,10)),
 		Rules.Entity.new("enemy", Vector2(12,6)),
-		Rules.Entity.new("enemy", Vector2(10,8), null, {kind="pigeon"}),
+		Rules.Entity.new("enemy", Vector2(10,8)),
 	]
 	rules = Rules.new(18, 11, entities)
 	
@@ -70,13 +68,10 @@ func _init_positions():
 	# current only handles first player
 	$Player.position = level_to_render_vec(p[0].position)
 
-	nodes_by_eid[rules.get_player().id] = $Player
-
 	for e in rules.entities_of_type("enemy"):
 		var kind = e.props.get("kind", "mushroom")
 		var n = enemy_kinds[kind].instance()
 		n.set_entity(e)
-		nodes_by_eid[e.id] = n
 		n.position = level_to_render_vec(e.position)
 		self.add_child(n)
 		
@@ -94,7 +89,7 @@ func _on_ball_hit(n: Node):
 					pass
 	
 func _apply_push(move):
-	var node = nodes_by_eid[move.eid]
+	var node = _find_enemy_by_eid(move.eid)
 	var ent = rules.entities[move.eid]
 	
 	# quick push move animation
@@ -150,8 +145,7 @@ func player_move(vector):
 	_notify_on_move()
 	
 func _notify_on_move():
-	for n in nodes_by_eid:
-		nodes_by_eid[n].on_move()
+	get_tree().call_group(Rules.ENEMY, "on_move")
 
 func _apply_player_walk(move: Rules.Move):
 	var player = rules.get_player()
@@ -171,17 +165,11 @@ func _physics_process(delta):
 		$Aimer.vector = mouse_pos - $Player.position
 	elif in_state(RESOLVING_PHYSICS):
 		resolutionElapsed += delta
-		var ball = $Ball
+		var ball: RigidBody2D = $Ball
 		# we're done if we've given the ball enough time and it's stopped moving
-		# TODO research linear velocity
-		
-		if resolutionElapsed > 1.5:
-			ball.linear_velocity += -ball.linear_velocity * delta * 1
-			ball.angular_velocity *= 1 - (0.1 * delta)
 		var lv = ball.linear_velocity.length()
 		if resolutionElapsed > 1.5 and lv < 30:
-			ball.linear_velocity = Vector2(0,0)
-			ball.angular_velocity = 0
+			ball.sleeping = true
 			enter_state(ENEMIES)
 
 func in_state(s):
@@ -221,8 +209,11 @@ func on_exit_physics():
 	toggle_collisions(false)
 	
 func toggle_collisions(on):
-	var cs2d = $Ball.get_node("./CollisionShape2D")
-	cs2d.disabled = !on
+	# disable collision with players outside of resolution
+	var mask = 0b1111
+	if not on:
+		mask = 1
+	$Ball.collision_mask = mask
 	$Ball.contact_monitor = on
 
 func on_enter_enemies():
@@ -253,10 +244,16 @@ func _apply_attack(move):
 func _player_died():
 	enter_state(GAME_OVER)
 	$PlayerDied.visible = true
+	
+func _find_enemy_by_eid(eid):
+	for n in get_tree().get_nodes_in_group(Rules.ENEMY):
+		if n.entity.id == eid:
+			return n
+	
 
 func _apply_walk(move):
 	var enemy = rules.entities[move.eid]
-	var node = nodes_by_eid[move.eid]
+	var node = _find_enemy_by_eid(move.eid)
 
 	var tween = $EnemyTween
 	tween.interpolate_property(node, "position",

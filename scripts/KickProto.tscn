@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=2]
+[gd_scene load_steps=19 format=2]
 
 [ext_resource path="res://roguelike_tilesheet.tres" type="TileSet" id=1]
 [ext_resource path="res://assets/hero/elf_m_idle_anim_f2.png" type="Texture" id=2]
@@ -16,16 +16,19 @@
 [ext_resource path="res://scripts/Health.tscn" type="PackedScene" id=14]
 [ext_resource path="res://scripts/KickGame.gd" type="Script" id=22]
 
+[sub_resource type="PhysicsMaterial" id=3]
+bounce = 0.6
+
 [sub_resource type="SpriteFrames" id=1]
 animations = [ {
-"frames": [ ExtResource( 6 ), ExtResource( 5 ), ExtResource( 4 ), ExtResource( 10 ) ],
-"loop": true,
-"name": "walk",
-"speed": 5.0
-}, {
 "frames": [ ExtResource( 9 ) ],
 "loop": true,
 "name": "attack",
+"speed": 5.0
+}, {
+"frames": [ ExtResource( 6 ), ExtResource( 5 ), ExtResource( 4 ), ExtResource( 10 ) ],
+"loop": true,
+"name": "walk",
 "speed": 5.0
 }, {
 "frames": [ ExtResource( 11 ), ExtResource( 8 ), ExtResource( 2 ), ExtResource( 7 ) ],
@@ -51,6 +54,8 @@ tile_set = ExtResource( 1 )
 cell_size = Vector2( 16, 16 )
 collision_use_kinematic = true
 collision_bounce = 0.76
+collision_layer = 2147483649
+collision_mask = 14
 format = 1
 tile_data = PoolIntArray( 0, 3, 0, 1, 3, 2, 2, 3, 2, 3, 3, 2, 4, 3, 2, 5, 3, 0, 6, 3, 2, 7, 3, 0, 8, 3, 0, 9, 3, 0, 10, 3, 0, 11, 3, 2, 12, 3, 2, 13, 3, 2, 14, 3, 2, 15, 3, 0, 16, 3, 2, 17, 3, 2, 18, 3, 0, 19, 3, 0, 65536, 3, 1, 65555, 3, 1, 131072, 3, 1, 131091, 3, 3, 196608, 3, 3, 196627, 3, 3, 262144, 3, 1, 262163, 3, 1, 327680, 3, 3, 327685, 2, 327683, 327699, 3, 1, 393216, 3, 1, 393222, 2, 327683, 393235, 3, 3, 458752, 3, 1, 458771, 3, 3, 524288, 3, 3, 524307, 3, 3, 589824, 3, 3, 589843, 3, 3, 655360, 3, 3, 655379, 3, 1, 720896, 3, 3, 720915, 3, 1, 786432, 3, 0, 786433, 3, 2, 786434, 3, 0, 786435, 3, 0, 786436, 3, 2, 786437, 3, 0, 786438, 3, 2, 786439, 3, 2, 786440, 3, 0, 786441, 3, 2, 786442, 3, 0, 786443, 3, 2, 786444, 3, 0, 786445, 3, 0, 786446, 3, 2, 786447, 3, 0, 786448, 3, 2, 786449, 3, 0, 786450, 3, 2, 786451, 3, 0 )
 __meta__ = {
@@ -64,6 +69,10 @@ color = Color( 0.2, 0.976471, 0.301961, 1 )
 
 [node name="Ball" parent="." instance=ExtResource( 3 )]
 position = Vector2( 249.5, 160.5 )
+collision_layer = 8
+collision_mask = 15
+physics_material_override = SubResource( 3 )
+linear_damp = 0.6
 
 [node name="KickButton" type="Button" parent="."]
 margin_left = 115.0
@@ -79,6 +88,8 @@ __meta__ = {
 [node name="Player" type="KinematicBody2D" parent="."]
 position = Vector2( 200, 100 )
 input_pickable = true
+collision_layer = 2
+collision_mask = 15
 script = ExtResource( 12 )
 
 [node name="AnimatedSprite" type="AnimatedSprite" parent="Player"]

@@ -3,6 +3,8 @@ extends Node2D
 const Mushroom = preload("res://scripts/Mushroom.tscn")
 #const Pigeon = preload("res://npcs/Pigeon.tscn")
 
+signal state_change
+
 const PLAYER = "player"
 const AIMING = "aiming"
 const CONFIRMING = "confirming"
@@ -197,6 +199,7 @@ func enter_state(entering):
 	print("transitioning %s -> %s" % [exiting, state])
 	run_state_handler(exiting, "exit")
 	run_state_handler(entering, "enter")
+	emit_signal("state_change", entering, exiting)
 
 func run_state_handler(state, event):
 	var fn = state_transitions.get(state, {}).get(event, null)

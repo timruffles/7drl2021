@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=2]
+[gd_scene load_steps=27 format=2]
 
 [ext_resource path="res://roguelike_tilesheet.tres" type="TileSet" id=1]
 [ext_resource path="res://assets/hero/elf_m_idle_anim_f2.png" type="Texture" id=2]
@@ -14,6 +14,13 @@
 [ext_resource path="res://scripts/KickPlayer.gd" type="Script" id=12]
 [ext_resource path="res://scripts/Aimer.gd" type="Script" id=13]
 [ext_resource path="res://scripts/Health.tscn" type="PackedScene" id=14]
+[ext_resource path="res://assets/football/ball3.png" type="Texture" id=15]
+[ext_resource path="res://scripts/BallIndicator.gd" type="Script" id=16]
+[ext_resource path="res://assets/football/ball4.png" type="Texture" id=17]
+[ext_resource path="res://assets/football/ball6.png" type="Texture" id=18]
+[ext_resource path="res://assets/football/ball1.png" type="Texture" id=19]
+[ext_resource path="res://assets/football/ball2.png" type="Texture" id=20]
+[ext_resource path="res://assets/football/ball5.png" type="Texture" id=21]
 [ext_resource path="res://scripts/KickGame.gd" type="Script" id=22]
 
 [sub_resource type="PhysicsMaterial" id=1]
@@ -21,14 +28,14 @@ bounce = 0.6
 
 [sub_resource type="SpriteFrames" id=2]
 animations = [ {
-"frames": [ ExtResource( 6 ), ExtResource( 5 ), ExtResource( 4 ), ExtResource( 10 ) ],
-"loop": true,
-"name": "walk",
-"speed": 5.0
-}, {
 "frames": [ ExtResource( 9 ) ],
 "loop": true,
 "name": "attack",
+"speed": 5.0
+}, {
+"frames": [ ExtResource( 6 ), ExtResource( 5 ), ExtResource( 4 ), ExtResource( 10 ) ],
+"loop": true,
+"name": "walk",
 "speed": 5.0
 }, {
 "frames": [ ExtResource( 11 ), ExtResource( 8 ), ExtResource( 2 ), ExtResource( 7 ) ],
@@ -39,6 +46,19 @@ animations = [ {
 
 [sub_resource type="RectangleShape2D" id=3]
 extents = Vector2( 6.98052, 9.52416 )
+
+[sub_resource type="SpriteFrames" id=4]
+animations = [ {
+"frames": [ ExtResource( 19 ), ExtResource( 20 ), ExtResource( 15 ), ExtResource( 17 ), ExtResource( 21 ), ExtResource( 18 ) ],
+"loop": true,
+"name": "roll",
+"speed": 5.0
+}, {
+"frames": [ ExtResource( 19 ) ],
+"loop": true,
+"name": "idle",
+"speed": 5.0
+} ]
 
 [node name="KickDungeon" type="Node2D"]
 script = ExtResource( 22 )
@@ -70,7 +90,7 @@ script = ExtResource( 13 )
 color = Color( 0.2, 0.976471, 0.301961, 1 )
 
 [node name="Ball" parent="." instance=ExtResource( 3 )]
-position = Vector2( 249.5, 160.5 )
+position = Vector2( 249.5, 160.307 )
 collision_layer = 0
 collision_mask = 15
 physics_material_override = SubResource( 1 )
@@ -118,6 +138,13 @@ margin_top = -10.7
 margin_right = -0.100006
 margin_bottom = -10.7
 
+[node name="BallIndicator" type="AnimatedSprite" parent="."]
+position = Vector2( 310.783, 8.35599 )
+scale = Vector2( 0.179206, 0.179206 )
+frames = SubResource( 4 )
+animation = "idle"
+script = ExtResource( 16 )
+
 [node name="PlayerDied" type="Panel" parent="."]
 visible = false
 light_mask = -2147483647
@@ -135,6 +162,7 @@ margin_top = 32.25
 margin_right = 268.0
 margin_bottom = 72.25
 text = "Death has blown the final whistle!"
+[connection signal="state_change" from="." to="BallIndicator" method="_on_KickDungeon_state_change"]
 [connection signal="button_up" from="KickButton" to="." method="_on_KickButton_button_up"]
 [connection signal="input_event" from="Player" to="Player" method="_on_Player_input_event"]
 [connection signal="selected" from="Player" to="." method="_on_Player_selected"]

@@ -1,6 +1,11 @@
 extends "res://addons/gut/test.gd"
 
 
+func test_generate_level():
+	var r = Rules.new(10, 12)
+	print(r.debug_draw())
+	
+
 func test_enemies_seek_closest_player():
 	# second player is way closer (x distances are visually much smaller than y)
 	var rules = to_rules(12, """

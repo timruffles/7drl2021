@@ -8,35 +8,82 @@ class_name Rules
 # entity types
 const ENEMY = "enemy"
 const PLAYER = "player"
+const ITEM = "item"
 
 # move types
 const WALK_MOVE = "walk"
 const ATTACK_MOVE = "attack"
 const PUSHED_MOVE = "pushed"
 
+const BALL_DISTANCE = 15
+
 var astar: AStar2D
 var entities = {}
 var width
 var height
 
+var rng = RandomNumberGenerator.new()
 var _enemy_move_list = []
 
-func _init(w, h, ent):
+# for id generation
+var eid = 0
+
+func _init(w, h, ent = null):
 	width = w
 	height = h
-
-	# TODO think more about where to init these
+	
 	entities = {}
-	var eid = 0
-	for e in ent:
-		eid += 1
-		var id = eid
-		# accept preset IDs (currently just for tests)
-		if not e.id == null:
-			id = e.id
-		entities[id] = e
-		e.id = id
+	if ent:
+		for e in ent:
+			add_entity(e)
+	else:
+		_generate_level(0)
 
+func _generate_level(level):
+	var p = Entity.new(PLAYER, Vector2(4,4))
+	add_entity(p)
+	
+	_add_item("down", _min_distance(p.position, 8))
+	_add_item("trap", _random_position())
+	
+	for i in range(level + 2):
+		_add_npc({kind="mushroom"}, _min_distance(p.position, 4))
+	
+func _add_item(name, position):
+	# generate points on a random circle
+	add_entity(Entity.new(ITEM, position, _next_eid(), {kind=name}))
+
+func add_entity(e):
+	assert(not entity_at(e.position), "duplicate position entity")
+	var id = eid
+	# accept preset IDs (currently just for tests)
+	if not e.id == null:
+		id = _next_eid()
+	entities[id] = e
+	e.id = id
+	
+func _min_distance(vec, distance):
+	for i in range(100):
+		var rand_rad = rng.randf_range(0, TAU)
+		var v = vec + Vector2(round(cos(rand_rad) * distance), round(sin(rand_rad) * distance)) 
+		if is_in_bounds(v) and !entity_at(v):
+			return v
+	assert(false, "failed")
+
+func _random_position():
+	for i in range(100):
+		var v = Vector2(rng.randi_range(0, width - 1), rng.randi_range(0, height - 1))
+		if is_in_bounds(v) and !entity_at(v):
+			return v
+	assert(false, "failed")
+		
+func _add_npc(attrs, pos):
+	add_entity(Entity.new(ENEMY, pos, _next_eid(), attrs))
+	
+func _next_eid():
+	eid += 1
+	return eid
+	
 # turn prepares the rules to step through the enemies moves 
 func turn():
 	# we prepare the list to give us a way to track our progress through the move

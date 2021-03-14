@@ -1,9 +1,16 @@
 extends Node2D
 
-const Mushroom = preload("res://scripts/Mushroom.tscn")
+const NPC = preload("res://scripts/NPC.tscn")
 #const Pigeon = preload("res://npcs/Pigeon.tscn")
+const Item = preload("res://scripts/Item.tscn")
 
+# this is any state change - can be UI state
 signal state_change
+# this is a game 'turn' - either player moved or enemy move
+signal turn
+
+
+class_name KickGame
 
 const PLAYER = "player"
 const AIMING = "aiming"
@@ -17,15 +24,9 @@ const GAME_OVER = "game_over"
 const WALL_LAYER = 0
 const PLAYER_LAYER = 1
 
-var state_transitions = {}
 var state = PLAYER
 var resolutionElapsed = 0
 var rules: Rules
-
-var enemy_kinds = {
-#	pigeon = Pigeon,
-	mushroom = Mushroom,
-}
 
 const TILE_DIMENSIONS = 16
 
@@ -33,33 +34,7 @@ func _ready():
 	$KickButton.visible = false
 	$Aimer.visible = false
 	
-	# TODO integrate procedural generation of the level
-	var entities = [
-		Rules.Entity.new("player", Vector2(16,10)),
-		Rules.Entity.new("enemy", Vector2(12,6)),
-		Rules.Entity.new("enemy", Vector2(10,8)),
-	]
-	rules = Rules.new(18, 11, entities)
-	
-	state_transitions = {
-		AIMING: {
-			"enter": funcref(self, "on_enter_aiming"),
-		},
-		CONFIRMING: {
-			"enter": funcref(self, "on_enter_confirming"),
-			"exit": funcref(self, "on_exit_confirming"),
-		},
-		RESOLVING_PHYSICS: {
-			"enter": funcref(self, "on_enter_physics"),
-			"exit": funcref(self, "on_exit_physics"),
-		},
-		RESOLVING_MOVE: {
-			# no behaviour required beyond preventing additional moves during animations
-		},
-		ENEMIES: {
-			"enter": funcref(self, "on_enter_enemies"),
-		},
-	}
+	rules = Rules.new(18, 11)
 
 	_init_positions()
 	
@@ -85,13 +60,18 @@ func _init_positions():
 	# current only handles first player
 	$Player.position = level_to_render_vec(p[0].position)
 
-	for e in rules.entities_of_type("enemy"):
-		var kind = e.props.get("kind", "mushroom")
-		var n = enemy_kinds[kind].instance()
+	for e in rules.entities_of_type(Rules.ENEMY):
+		var n = NPC.instance()
 		n.set_entity(e)
 		n.position = level_to_render_vec(e.position)
 		self.add_child(n)
 		
+	for e in rules.entities_of_type(Rules.ITEM):
+		var n = Item.instance()
+		n.set_entity(e)
+		n.position = level_to_render_vec(e.position)
+		self.add_child(n)
+			
 func _on_ball_hit(n: Node):
 	if n == $Player:
 		return
@@ -159,10 +139,7 @@ func player_move(vector):
 		_:
 			assert(false, "TODO handle player move type %s" % move.type)
 			
-	_notify_on_move()
-	
-func _notify_on_move():
-	get_tree().call_group(Rules.ENEMY, "on_move")
+	emit_signal(Constants.TURN_SIGNAL)
 
 func _apply_player_walk(move: Rules.Move):
 	var player = rules.get_player()
@@ -187,6 +164,7 @@ func _physics_process(delta):
 		var lv = ball.linear_velocity.length()
 		if resolutionElapsed > 1.5 and lv < 30:
 			ball.sleeping = true
+			emit_signal(Constants.TURN_SIGNAL)
 			enter_state(ENEMIES)
 
 func in_state(s):
@@ -197,14 +175,23 @@ func enter_state(entering):
 	state = entering
 
 	print("transitioning %s -> %s" % [exiting, state])
-	run_state_handler(exiting, "exit")
-	run_state_handler(entering, "enter")
-	emit_signal("state_change", entering, exiting)
 
-func run_state_handler(state, event):
-	var fn = state_transitions.get(state, {}).get(event, null)
-	if fn:
-		fn.call_func()
+	emit_signal("state_change", entering, exiting)
+	
+	match exiting:
+		CONFIRMING:
+			on_exit_confirming(entering)
+		RESOLVING_PHYSICS:
+			on_exit_physics()
+	match entering:
+		AIMING:
+			on_enter_aiming()
+		CONFIRMING:
+			on_enter_confirming()
+		RESOLVING_PHYSICS:
+			on_enter_physics()
+		ENEMIES:
+			on_enter_enemies()
 
 func on_enter_aiming():
 	$Aimer.position = $Player.position
@@ -214,7 +201,10 @@ func on_enter_aiming():
 func on_enter_confirming():
 	$KickButton.visible = true
 
-func on_exit_confirming():
+func on_exit_confirming(entering):
+	# cancelled or retrying
+	if entering != RESOLVING_PHYSICS:
+		return
 	# simulate the result of the player's move
 	$Aimer.visible = false
 	$Ball.apply_impulse(Vector2(0,0), $Aimer.vector)
@@ -251,6 +241,7 @@ func next_enemy_move():
 	# enemy turn done
 	if not move:
 		print("no move!")
+		emit_signal(Constants.TURN_SIGNAL)
 		enter_state(PLAYER)
 		return
 
@@ -293,7 +284,7 @@ func _on_KickButton_button_up():
 	enter_state(RESOLVING_PHYSICS)
 
 func _on_Player_selected():
-	if in_state(PLAYER):
+	if in_state(PLAYER) or in_state(CONFIRMING):
 		enter_state(AIMING)
 
 # TODO move to Rules

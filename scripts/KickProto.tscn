@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=2]
+[gd_scene load_steps=28 format=2]
 
 [ext_resource path="res://roguelike_tilesheet.tres" type="TileSet" id=1]
 [ext_resource path="res://assets/hero/elf_m_idle_anim_f2.png" type="Texture" id=2]
@@ -22,20 +22,21 @@
 [ext_resource path="res://assets/football/ball2.png" type="Texture" id=20]
 [ext_resource path="res://assets/football/ball5.png" type="Texture" id=21]
 [ext_resource path="res://scripts/KickGame.gd" type="Script" id=22]
+[ext_resource path="res://scripts/Item.tscn" type="PackedScene" id=23]
 
 [sub_resource type="PhysicsMaterial" id=1]
 bounce = 0.6
 
 [sub_resource type="SpriteFrames" id=2]
 animations = [ {
-"frames": [ ExtResource( 9 ) ],
-"loop": true,
-"name": "attack",
-"speed": 5.0
-}, {
 "frames": [ ExtResource( 6 ), ExtResource( 5 ), ExtResource( 4 ), ExtResource( 10 ) ],
 "loop": true,
 "name": "walk",
+"speed": 5.0
+}, {
+"frames": [ ExtResource( 9 ) ],
+"loop": true,
+"name": "attack",
 "speed": 5.0
 }, {
 "frames": [ ExtResource( 11 ), ExtResource( 8 ), ExtResource( 2 ), ExtResource( 7 ) ],
@@ -66,6 +67,7 @@ script = ExtResource( 22 )
 [node name="TileMap_Floor" type="TileMap" parent="."]
 tile_set = ExtResource( 1 )
 cell_size = Vector2( 16, 16 )
+cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 collision_layer = 0
 collision_mask = 2147483648
 format = 1
@@ -74,12 +76,13 @@ tile_data = PoolIntArray( 0, 2, 131074, 1, 2, 131075, 2, 2, 131075, 3, 2, 131075
 [node name="TileMap_Wall" type="TileMap" parent="."]
 tile_set = ExtResource( 1 )
 cell_size = Vector2( 16, 16 )
+cell_custom_transform = Transform2D( 0, 0, 0, 0, 0, 0 )
 collision_use_kinematic = true
 collision_bounce = 0.76
 collision_layer = 2147483649
 collision_mask = 0
 format = 1
-tile_data = PoolIntArray( 0, 3, 0, 1, 3, 2, 2, 3, 2, 3, 3, 2, 4, 3, 2, 5, 3, 0, 6, 3, 2, 7, 3, 0, 8, 3, 0, 9, 3, 0, 10, 3, 0, 11, 3, 2, 12, 3, 2, 13, 3, 2, 14, 3, 2, 15, 3, 0, 16, 3, 2, 17, 3, 2, 18, 3, 0, 19, 3, 0, 65536, 3, 1, 65555, 3, 1, 131072, 3, 1, 131091, 3, 3, 196608, 3, 3, 196627, 3, 3, 262144, 3, 1, 262163, 3, 1, 327680, 3, 3, 327685, 2, 327683, 327699, 3, 1, 393216, 3, 1, 393222, 2, 327683, 393235, 3, 3, 458752, 3, 1, 458771, 3, 3, 524288, 3, 3, 524307, 3, 3, 589824, 3, 3, 589843, 3, 3, 655360, 3, 3, 655379, 3, 1, 720896, 3, 3, 720915, 3, 1, 786432, 3, 0, 786433, 3, 2, 786434, 3, 0, 786435, 3, 0, 786436, 3, 2, 786437, 3, 0, 786438, 3, 2, 786439, 3, 2, 786440, 3, 0, 786441, 3, 2, 786442, 3, 0, 786443, 3, 2, 786444, 3, 0, 786445, 3, 0, 786446, 3, 2, 786447, 3, 0, 786448, 3, 2, 786449, 3, 0, 786450, 3, 2, 786451, 3, 0 )
+tile_data = PoolIntArray( 0, 3, 0, 1, 3, 2, 2, 3, 2, 3, 3, 2, 4, 3, 2, 5, 3, 0, 6, 3, 2, 7, 3, 0, 8, 3, 0, 9, 3, 0, 10, 3, 0, 11, 3, 2, 12, 3, 2, 13, 3, 2, 14, 3, 2, 15, 3, 0, 16, 3, 2, 17, 3, 2, 18, 3, 0, 19, 3, 0, 65536, 3, 1, 65555, 3, 1, 131072, 3, 1, 131091, 3, 3, 196608, 3, 3, 196627, 3, 3, 262144, 3, 1, 262163, 3, 1, 327680, 3, 3, 327699, 3, 1, 393216, 3, 1, 393235, 3, 3, 458752, 3, 1, 458771, 3, 3, 524288, 3, 3, 524307, 3, 3, 589824, 3, 3, 589843, 3, 3, 655360, 3, 3, 655379, 3, 1, 720896, 3, 3, 720915, 3, 1, 786432, 3, 0, 786433, 3, 2, 786434, 3, 0, 786435, 3, 0, 786436, 3, 2, 786437, 3, 0, 786438, 3, 2, 786439, 3, 2, 786440, 3, 0, 786441, 3, 2, 786442, 3, 0, 786443, 3, 2, 786444, 3, 0, 786445, 3, 0, 786446, 3, 2, 786447, 3, 0, 786448, 3, 2, 786449, 3, 0, 786450, 3, 2, 786451, 3, 0 )
 __meta__ = {
 "_editor_description_": ""
 }
@@ -117,6 +120,8 @@ script = ExtResource( 12 )
 [node name="AnimatedSprite" type="AnimatedSprite" parent="Player"]
 frames = SubResource( 2 )
 animation = "idle"
+frame = 2
+playing = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
 position = Vector2( 0, 4.287 )
@@ -162,6 +167,10 @@ margin_top = 32.25
 margin_right = 268.0
 margin_bottom = 72.25
 text = "Death has blown the final whistle!"
+
+[node name="Sprite" parent="." instance=ExtResource( 23 )]
+visible = false
+position = Vector2( 71.7011, 51.3136 )
 [connection signal="state_change" from="." to="BallIndicator" method="_on_KickDungeon_state_change"]
 [connection signal="button_up" from="KickButton" to="." method="_on_KickButton_button_up"]
 [connection signal="input_event" from="Player" to="Player" method="_on_Player_input_event"]

@@ -10,7 +10,8 @@ func _on_Player_input_event(_viewport, event, _shape_idx):
 	if event is InputEventMouseButton \
 	and event.button_index == BUTTON_LEFT \
 	and event.is_pressed():
-		emit_signal("selected")
+		if position.distance_to(get_node("../Ball").position) <  Rules.BALL_DISTANCE:
+			emit_signal("selected")
 
 func on_move():
 	# nothing required - game over logic handled elsewhere

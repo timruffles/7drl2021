@@ -1,29 +1,29 @@
 [gd_scene load_steps=13 format=2]
 
-[ext_resource path="res://assets/hero/elf_m_idle_anim_f0.png" type="Texture" id=1]
+[ext_resource path="res://assets/hero/elf_m_run_anim_f2.png" type="Texture" id=1]
 [ext_resource path="res://assets/hero/elf_m_run_anim_f3.png" type="Texture" id=2]
-[ext_resource path="res://scripts/KickPlayer.gd" type="Script" id=3]
-[ext_resource path="res://assets/hero/elf_m_run_anim_f2.png" type="Texture" id=4]
-[ext_resource path="res://assets/hero/elf_m_run_anim_f1.png" type="Texture" id=5]
-[ext_resource path="res://assets/hero/elf_m_run_anim_f0.png" type="Texture" id=6]
-[ext_resource path="res://assets/hero/elf_m_idle_anim_f3.png" type="Texture" id=7]
-[ext_resource path="res://assets/hero/elf_m_idle_anim_f1.png" type="Texture" id=8]
-[ext_resource path="res://assets/hero/elf_m_hit_anim_f0.png" type="Texture" id=9]
-[ext_resource path="res://assets/hero/elf_m_idle_anim_f2.png" type="Texture" id=10]
+[ext_resource path="res://assets/hero/elf_m_idle_anim_f0.png" type="Texture" id=3]
+[ext_resource path="res://assets/hero/elf_m_run_anim_f1.png" type="Texture" id=4]
+[ext_resource path="res://assets/hero/elf_m_run_anim_f0.png" type="Texture" id=5]
+[ext_resource path="res://assets/hero/elf_m_idle_anim_f3.png" type="Texture" id=6]
+[ext_resource path="res://assets/hero/elf_m_idle_anim_f1.png" type="Texture" id=7]
+[ext_resource path="res://assets/hero/elf_m_hit_anim_f0.png" type="Texture" id=8]
+[ext_resource path="res://assets/hero/elf_m_idle_anim_f2.png" type="Texture" id=9]
+[ext_resource path="res://scripts/KickPlayer.gd" type="Script" id=10]
 
 [sub_resource type="SpriteFrames" id=1]
 animations = [ {
-"frames": [ ExtResource( 6 ), ExtResource( 5 ), ExtResource( 4 ), ExtResource( 2 ) ],
+"frames": [ ExtResource( 5 ), ExtResource( 4 ), ExtResource( 1 ), ExtResource( 2 ) ],
 "loop": true,
 "name": "walk",
 "speed": 5.0
 }, {
-"frames": [ ExtResource( 9 ) ],
+"frames": [ ExtResource( 8 ) ],
 "loop": true,
 "name": "attack",
 "speed": 5.0
 }, {
-"frames": [ ExtResource( 1 ), ExtResource( 8 ), ExtResource( 10 ), ExtResource( 7 ) ],
+"frames": [ ExtResource( 3 ), ExtResource( 7 ), ExtResource( 9 ), ExtResource( 6 ) ],
 "loop": true,
 "name": "idle",
 "speed": 5.0
@@ -33,27 +33,28 @@ animations = [ {
 extents = Vector2( 6.98052, 9.52416 )
 
 [node name="Player" type="KinematicBody2D"]
+position = Vector2( 200, 100 )
 input_pickable = true
 collision_layer = 2
-collision_mask = 29
-script = ExtResource( 3 )
+collision_mask = 0
+script = ExtResource( 10 )
 
 [node name="AnimatedSprite" type="AnimatedSprite" parent="."]
 frames = SubResource( 1 )
 animation = "idle"
-frame = 2
+frame = 3
 playing = true
-offset = Vector2( 0, -4 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-visible = false
+position = Vector2( 0, 4.287 )
 shape = SubResource( 2 )
 
 [node name="Area2D" type="Area2D" parent="."]
-collision_layer = 2
+collision_layer = 0
 collision_mask = 16
 
 [node name="CollisionShape2D2" type="CollisionShape2D" parent="Area2D"]
+position = Vector2( 0, 4.287 )
 shape = SubResource( 2 )
 [connection signal="input_event" from="." to="." method="_on_Player_input_event"]
 [connection signal="area_entered" from="Area2D" to="." method="_on_Area2D_area_entered"]

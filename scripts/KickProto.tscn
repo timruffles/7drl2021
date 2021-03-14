@@ -1,17 +1,9 @@
-[gd_scene load_steps=28 format=2]
+[gd_scene load_steps=17 format=2]
 
 [ext_resource path="res://roguelike_tilesheet.tres" type="TileSet" id=1]
-[ext_resource path="res://assets/hero/elf_m_idle_anim_f2.png" type="Texture" id=2]
+[ext_resource path="res://Player.tscn" type="PackedScene" id=2]
 [ext_resource path="res://scripts/Ball.tscn" type="PackedScene" id=3]
-[ext_resource path="res://assets/hero/elf_m_run_anim_f2.png" type="Texture" id=4]
-[ext_resource path="res://assets/hero/elf_m_run_anim_f1.png" type="Texture" id=5]
-[ext_resource path="res://assets/hero/elf_m_run_anim_f0.png" type="Texture" id=6]
-[ext_resource path="res://assets/hero/elf_m_idle_anim_f3.png" type="Texture" id=7]
-[ext_resource path="res://assets/hero/elf_m_idle_anim_f1.png" type="Texture" id=8]
-[ext_resource path="res://assets/hero/elf_m_hit_anim_f0.png" type="Texture" id=9]
-[ext_resource path="res://assets/hero/elf_m_run_anim_f3.png" type="Texture" id=10]
-[ext_resource path="res://assets/hero/elf_m_idle_anim_f0.png" type="Texture" id=11]
-[ext_resource path="res://scripts/KickPlayer.gd" type="Script" id=12]
+[ext_resource path="res://scripts/Score.gd" type="Script" id=4]
 [ext_resource path="res://scripts/Aimer.gd" type="Script" id=13]
 [ext_resource path="res://scripts/Health.tscn" type="PackedScene" id=14]
 [ext_resource path="res://assets/football/ball3.png" type="Texture" id=15]
@@ -22,31 +14,9 @@
 [ext_resource path="res://assets/football/ball2.png" type="Texture" id=20]
 [ext_resource path="res://assets/football/ball5.png" type="Texture" id=21]
 [ext_resource path="res://scripts/KickGame.gd" type="Script" id=22]
-[ext_resource path="res://scripts/Item.tscn" type="PackedScene" id=23]
 
 [sub_resource type="PhysicsMaterial" id=1]
 bounce = 0.6
-
-[sub_resource type="SpriteFrames" id=2]
-animations = [ {
-"frames": [ ExtResource( 6 ), ExtResource( 5 ), ExtResource( 4 ), ExtResource( 10 ) ],
-"loop": true,
-"name": "walk",
-"speed": 5.0
-}, {
-"frames": [ ExtResource( 9 ) ],
-"loop": true,
-"name": "attack",
-"speed": 5.0
-}, {
-"frames": [ ExtResource( 11 ), ExtResource( 8 ), ExtResource( 2 ), ExtResource( 7 ) ],
-"loop": true,
-"name": "idle",
-"speed": 5.0
-} ]
-
-[sub_resource type="RectangleShape2D" id=3]
-extents = Vector2( 6.98052, 9.52416 )
 
 [sub_resource type="SpriteFrames" id=4]
 animations = [ {
@@ -87,6 +57,8 @@ __meta__ = {
 "_editor_description_": ""
 }
 
+[node name="ItemLayer" type="Node2D" parent="."]
+
 [node name="Aimer" type="Node2D" parent="."]
 position = Vector2( 200, 100 )
 script = ExtResource( 13 )
@@ -95,11 +67,17 @@ color = Color( 0.2, 0.976471, 0.301961, 1 )
 [node name="Ball" parent="." instance=ExtResource( 3 )]
 position = Vector2( 249.5, 160.307 )
 collision_layer = 0
-collision_mask = 15
 physics_material_override = SubResource( 1 )
 linear_damp = 0.6
 
-[node name="KickButton" type="Button" parent="."]
+[node name="KickControls" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="KickButton" type="Button" parent="KickControls"]
 margin_left = 115.0
 margin_top = 160.5
 margin_right = 214.0
@@ -110,28 +88,22 @@ __meta__ = {
 "_edit_use_anchors_": false
 }
 
-[node name="Player" type="KinematicBody2D" parent="."]
+[node name="Cancel" type="Button" parent="KickControls"]
+margin_left = 115.397
+margin_top = 184.509
+margin_right = 214.397
+margin_bottom = 204.509
+custom_colors/font_color_disabled = Color( 0.12549, 1, 0.345098, 1 )
+text = "Cancel"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="BallInsert" type="Node2D" parent="."]
 position = Vector2( 200, 100 )
-input_pickable = true
-collision_layer = 2
-collision_mask = 0
-script = ExtResource( 12 )
 
-[node name="AnimatedSprite" type="AnimatedSprite" parent="Player"]
-frames = SubResource( 2 )
-animation = "idle"
-frame = 2
-playing = true
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
-position = Vector2( 0, 4.287 )
-shape = SubResource( 3 )
-
-[node name="Area2D" type="Area2D" parent="Player"]
-
-[node name="CollisionShape2D2" type="CollisionShape2D" parent="Player/Area2D"]
-position = Vector2( 0, 4.287 )
-shape = SubResource( 3 )
+[node name="Player" parent="." instance=ExtResource( 2 )]
+collision_mask = 29
 
 [node name="EnemyTween" type="Tween" parent="."]
 
@@ -154,9 +126,9 @@ script = ExtResource( 16 )
 visible = false
 light_mask = -2147483647
 margin_left = 13.5
-margin_top = 10.75
+margin_top = 16.0
 margin_right = 308.5
-margin_bottom = 197.75
+margin_bottom = 203.0
 __meta__ = {
 "_edit_use_anchors_": false
 }
@@ -168,10 +140,46 @@ margin_right = 268.0
 margin_bottom = 72.25
 text = "Death has blown the final whistle!"
 
-[node name="Sprite" parent="." instance=ExtResource( 23 )]
+[node name="NextLevel" type="Panel" parent="."]
 visible = false
-position = Vector2( 71.7011, 51.3136 )
+light_mask = -2147483647
+margin_right = 400.0
+margin_bottom = 250.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Tween" type="Tween" parent="NextLevel"]
+
+[node name="Control" type="Control" parent="."]
+margin_left = 75.0
+margin_right = 115.0
+margin_bottom = 40.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Score" type="RichTextLabel" parent="Control"]
+anchor_right = 0.26
+margin_left = 45.0
+margin_right = 85.0
+margin_bottom = 30.0
+text = "0
+"
+script = ExtResource( 4 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="RichTextLabel2" type="RichTextLabel" parent="Control"]
+margin_right = 40.0
+margin_bottom = 40.0
+text = "Score:
+"
+[connection signal="score" from="." to="Control/Score" method="_on_KickDungeon_score"]
 [connection signal="state_change" from="." to="BallIndicator" method="_on_KickDungeon_state_change"]
-[connection signal="button_up" from="KickButton" to="." method="_on_KickButton_button_up"]
-[connection signal="input_event" from="Player" to="Player" method="_on_Player_input_event"]
+[connection signal="body_entered" from="Ball" to="." method="_on_Ball_body_entered"]
+[connection signal="button_up" from="KickControls/KickButton" to="." method="_on_KickButton_button_up"]
+[connection signal="button_up" from="KickControls/Cancel" to="." method="_on_Cancel_button_up"]
 [connection signal="selected" from="Player" to="." method="_on_Player_selected"]
+[connection signal="touched_item" from="Player" to="." method="_on_Player_touched_item"]

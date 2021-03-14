@@ -10,11 +10,6 @@
 
 [sub_resource type="SpriteFrames" id=1]
 animations = [ {
-"frames": [ ExtResource( 7 ) ],
-"loop": true,
-"name": "error",
-"speed": 5.0
-}, {
 "frames": [ ExtResource( 3 ) ],
 "loop": true,
 "name": "down",
@@ -24,14 +19,19 @@ animations = [ {
 "loop": true,
 "name": "trap",
 "speed": 5.0
+}, {
+"frames": [ ExtResource( 7 ) ],
+"loop": true,
+"name": "error",
+"speed": 5.0
 } ]
 
 [sub_resource type="RectangleShape2D" id=2]
 extents = Vector2( 8, 8 )
 
-[node name="Sprite" type="KinematicBody2D"]
+[node name="Sprite" type="Area2D"]
 collision_layer = 16
-collision_mask = 0
+collision_mask = 2
 script = ExtResource( 6 )
 __meta__ = {
 "_edit_group_": true

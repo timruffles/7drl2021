@@ -1,4 +1,4 @@
-extends KinematicBody2D
+extends Area2D
 
 class_name Item
 
@@ -11,3 +11,4 @@ func set_entity(e: Rules.Entity):
 	entity = e
 	var k = e.props.get("kind", null)
 	SpriteUtils.set_animation($AnimatedSprite, e.props.get("kind", null))
+

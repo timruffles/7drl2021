@@ -6,7 +6,7 @@ var entity: Rules.Entity
 
 func _ready():
 	add_to_group(Rules.ENEMY)
-	get_node("/root/KickDungeon").connect(Constants.TURN_SIGNAL, self, "_on_turn")
+	get_node("/root/KickDungeon").connect(Constants.STATE_CHANGE_SIGNAL, self, "_on_turn")
 
 func set_entity(e: Rules.Entity):
 	entity = e
@@ -19,7 +19,8 @@ func set_entity(e: Rules.Entity):
 
 	
 # pretty dumb, just check what's happening to this sprite
-func _on_turn():
+func _on_turn(ent,ex):
 	if entity.hp <= 0:
-		queue_free()
-		get_parent().remove_child(self)
+		if not is_queued_for_deletion():
+			get_parent().remove_child(self)
+			queue_free()

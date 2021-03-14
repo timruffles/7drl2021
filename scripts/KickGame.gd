@@ -8,6 +8,8 @@ const Item = preload("res://scripts/Item.tscn")
 signal state_change
 # this is a game 'turn' - either player moved or enemy move
 signal turn
+# score change
+signal score
 
 
 class_name KickGame
@@ -18,6 +20,7 @@ const CONFIRMING = "confirming"
 const RESOLVING_MOVE = "resolving_move" # resolve deterministic move - attack, walk
 const RESOLVING_PHYSICS = "resolving_physics" # running physics
 const ENEMIES = "enemies" # enemies' turn
+const LEVEL_CHANGE = "level_change"
 const GAME_OVER = "game_over"
 
 # physics layers
@@ -27,11 +30,12 @@ const PLAYER_LAYER = 1
 var state = PLAYER
 var resolutionElapsed = 0
 var rules: Rules
+var score_hack = 0
 
 const TILE_DIMENSIONS = 16
 
 func _ready():
-	$KickButton.visible = false
+	$KickControls.visible = false
 	$Aimer.visible = false
 	
 	rules = Rules.new(18, 11)
@@ -49,9 +53,7 @@ func _on_player_exit_ball_check(body):
 	# rennable to allow ball to bounce off player again
 	if in_state(RESOLVING_PHYSICS) and body == $Ball:
 		$Ball.set_collision_mask_bit(PLAYER_LAYER, true)
-		
-func _on_log(n):
-	print(n)
+	
 
 func _init_positions():
 	var p = rules.entities_of_type("player")
@@ -59,18 +61,32 @@ func _init_positions():
 
 	# current only handles first player
 	$Player.position = level_to_render_vec(p[0].position)
+	$Player.entity = p[0]
+	
+	# do a dance to reset physics simulation position of ball
+	var ball = $Ball
+	ball.get_parent().remove_child(ball)
+	self.add_child_below_node($BallInsert, ball)
+	ball.name = "Ball"
+	ball.position = $Player.position + Vector2(-4,4)
+	ball.apply_impulse(Vector2(0,0), Vector2(0.0000001,0))
 
 	for e in rules.entities_of_type(Rules.ENEMY):
 		var n = NPC.instance()
 		n.set_entity(e)
 		n.position = level_to_render_vec(e.position)
-		self.add_child(n)
+		self.add_child_below_node($Player, n)
 		
 	for e in rules.entities_of_type(Rules.ITEM):
 		var n = Item.instance()
 		n.set_entity(e)
 		n.position = level_to_render_vec(e.position)
-		self.add_child(n)
+		$ItemLayer.add_child_below_node($Player, n)
+			
+
+func _score(n):
+	score_hack += n
+	emit_signal("score", score_hack)
 			
 func _on_ball_hit(n: Node):
 	if n == $Player:
@@ -78,6 +94,11 @@ func _on_ball_hit(n: Node):
 	if n is Enemy:
 
 		var move = rules.ball_hit(n.entity.id, n.position - $Ball.position)
+		# TODO quick hack to insta remove
+		n.visible = false
+		# disable collisions
+		n.collision_layer = -1
+		_score(100)
 		if move:
 			match move.type:
 				Rules.PUSHED_MOVE:
@@ -96,10 +117,10 @@ func _apply_push(move):
 	tween.start()
 
 func level_to_render_vec(lvl: Vector2) -> Vector2:
-	return Vector2(lvl.x * TILE_DIMENSIONS, lvl.y * TILE_DIMENSIONS)
+	return Vector2((lvl.x + 1) * TILE_DIMENSIONS, (lvl.y+1) * TILE_DIMENSIONS)
 
 func render_to_level_vec(v: Vector2) -> Vector2:
-	return Vector2(v.x / TILE_DIMENSIONS, v.y / TILE_DIMENSIONS)
+	return Vector2((v.x + 1) / TILE_DIMENSIONS, (v.y+1) / TILE_DIMENSIONS)
 
 func _input(event):
 	if event is InputEventMouseButton \
@@ -134,6 +155,7 @@ func player_move(vector):
 		Rules.WALK_MOVE:
 			_apply_player_walk(move)
 		Rules.ATTACK_MOVE:
+			_score(50)
 			# TODO animate
 			next_enemy_move()
 		_:
@@ -146,7 +168,7 @@ func _apply_player_walk(move: Rules.Move):
 
 	var tween = $PlayerMoveTween
 	tween.interpolate_property($Player, "position",
-		$Player.position, level_to_render_vec(player.position), 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+		$Player.position, level_to_render_vec(player.position), 0.05, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	tween.connect("tween_all_completed", self, "_player_tween_done")
 	tween.start()
 
@@ -176,7 +198,7 @@ func enter_state(entering):
 
 	print("transitioning %s -> %s" % [exiting, state])
 
-	emit_signal("state_change", entering, exiting)
+	emit_signal(Constants.STATE_CHANGE_SIGNAL, entering, exiting)
 	
 	match exiting:
 		CONFIRMING:
@@ -199,17 +221,19 @@ func on_enter_aiming():
 		
 
 func on_enter_confirming():
-	$KickButton.visible = true
+	$KickControls.visible = true
 
 func on_exit_confirming(entering):
-	# cancelled or retrying
-	if entering != RESOLVING_PHYSICS:
-		return
-	# simulate the result of the player's move
+	$KickControls.visible = false
 	$Aimer.visible = false
-	$Ball.apply_impulse(Vector2(0,0), $Aimer.vector)
-	# TODO once ball has left player, enable player layer mask
-	$KickButton.visible = false
+
+	if entering == RESOLVING_PHYSICS:
+		# simulate the result of the player's move
+		$Ball.apply_impulse(Vector2(0,0), $Aimer.vector)
+
+	
+
+
 	
 func _layer_bits(bit_index):
 	return int(pow(2, bit_index))
@@ -226,7 +250,7 @@ func toggle_collisions(on):
 	var mask = 0b1111
 	if on:
 		# avoid colliding with player until we've been kicked off the square
-		if $Player/Area2D.overlaps_body($Ball):
+	#	if $Player/Area2D.overlaps_body($Ball):
 			mask = mask ^ _layer_bits(PLAYER_LAYER)
 	else:
 		mask = 1
@@ -275,8 +299,8 @@ func _apply_walk(move):
 
 	var tween = $EnemyTween
 	tween.interpolate_property(node, "position",
-		node.position, level_to_render_vec(enemy.position), 0.2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
-	tween.connect("tween_all_completed", self, "next_enemy_move")
+		node.position, level_to_render_vec(enemy.position), 0.05, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+	tween.connect("tween_all_completed", self, "next_enemy_move", [])
 	tween.start()
 
 
@@ -285,7 +309,8 @@ func _on_KickButton_button_up():
 
 func _on_Player_selected():
 	if in_state(PLAYER) or in_state(CONFIRMING):
-		enter_state(AIMING)
+		if $Player.position.distance_to($Ball.position) < Rules.BALL_DISTANCE:
+			enter_state(AIMING)
 
 # TODO move to Rules
 class EnemyTurnState:
@@ -296,4 +321,52 @@ class EnemyTurnState:
 	
 	func _init():
 		pass
+
+func _next_level():
+	enter_state(LEVEL_CHANGE)
+
+	$NextLevel.modulate.a = 0
+	$NextLevel.visible = true
+	var tween = $NextLevel/Tween
+	tween.interpolate_property($NextLevel, "modulate",
+		Color(0, 0, 0, 0), Color(0, 0, 0, 1), 0.5, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
+	tween.connect("tween_all_completed", self, "_prepare_next_level", [], CONNECT_ONESHOT)
+	tween.start()
+	
+func _remove_all(nodes):
+	for n in nodes:
+		n.queue_free()
+		n.get_parent().remove_child(n)
+	
+func _prepare_next_level():
+	
+	_remove_all(get_tree().get_nodes_in_group(Rules.ITEM))
+	_remove_all(get_tree().get_nodes_in_group(Rules.ENEMY))
+	
+	rules.next_level()
+	_init_positions()
+	
+	var tween = $NextLevel/Tween
+	tween.interpolate_property($NextLevel, "modulate",
+		Color(0, 0, 0, 1), Color(0, 0, 0, 0), 0.5, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
+	tween.connect("tween_all_completed", self, "_start_next_level", [], CONNECT_ONESHOT)
+	tween.start()
+	
+func _start_next_level():
+	$NextLevel.visible = false
+	enter_state(PLAYER)
+
+func _on_Cancel_button_up():
+	enter_state(PLAYER)
+
+
+func _on_Player_touched_item(node: Item):
+	var kind = node.entity.props.get("kind", null)
+	match kind:
+		"down":
+			_next_level()
+		"trap":
+			node.get_node("AnimatedSprite").play("trap")
+		
+
 

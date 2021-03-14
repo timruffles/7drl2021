@@ -7,7 +7,7 @@
 [ext_resource path="res://assets/football/ball1.png" type="Texture" id=5]
 [ext_resource path="res://assets/football/ball6.png" type="Texture" id=6]
 
-[sub_resource type="SpriteFrames" id=4]
+[sub_resource type="SpriteFrames" id=1]
 animations = [ {
 "frames": [ ExtResource( 5 ), ExtResource( 1 ), ExtResource( 4 ), ExtResource( 3 ), ExtResource( 2 ), ExtResource( 6 ) ],
 "loop": true,
@@ -20,18 +20,20 @@ animations = [ {
 "speed": 5.0
 } ]
 
-[sub_resource type="CircleShape2D" id=5]
+[sub_resource type="CircleShape2D" id=2]
 
 [node name="RigidBody2D" type="RigidBody2D"]
+collision_layer = 8
+collision_mask = 15
 gravity_scale = 0.0
 contacts_reported = 1
 contact_monitor = true
 
 [node name="AnimatedSprite" type="AnimatedSprite" parent="."]
 scale = Vector2( 0.25, 0.25 )
-frames = SubResource( 4 )
+frames = SubResource( 1 )
 animation = "idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2( 0, -0.25 )
-shape = SubResource( 5 )
+shape = SubResource( 2 )

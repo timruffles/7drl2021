@@ -15,12 +15,13 @@ const WALK_MOVE = "walk"
 const ATTACK_MOVE = "attack"
 const PUSHED_MOVE = "pushed"
 
-const BALL_DISTANCE = 15
+const BALL_DISTANCE = 30
 
 var astar: AStar2D
 var entities = {}
 var width
 var height
+var level = 1
 
 var rng = RandomNumberGenerator.new()
 var _enemy_move_list = []
@@ -37,17 +38,22 @@ func _init(w, h, ent = null):
 		for e in ent:
 			add_entity(e)
 	else:
-		_generate_level(0)
+		_generate_level()
 
-func _generate_level(level):
+func _generate_level():
 	var p = Entity.new(PLAYER, Vector2(4,4))
 	add_entity(p)
 	
 	_add_item("down", _min_distance(p.position, 8))
-	_add_item("trap", _random_position())
+	#_add_item("trap", _random_position())
 	
 	for i in range(level + 2):
 		_add_npc({kind="mushroom"}, _min_distance(p.position, 4))
+		
+func next_level():
+	level += 1 
+	entities = {}
+	_generate_level()
 	
 func _add_item(name, position):
 	# generate points on a random circle
@@ -144,12 +150,17 @@ func is_in_bounds(vec):
 # vector in is direction ball is travelling through the node, like a ray aimed at it
 func ball_hit(eid, ball_through_node_vector):
 	var direction = quantize_vector(ball_through_node_vector)
-	var ent = entities[eid]
+	var ent = entities.get(eid, null)
+	# dead
+	if not ent:
+		return
 	var resulting_pos = ent.position + direction
 	# TODO do a wall bounce damage thing?/
 	if ent and is_in_bounds(resulting_pos):
 		ent.position = resulting_pos
-		return Move.new(eid, resulting_pos, PUSHED_MOVE)
+		# TODO EID and hack
+		_apply_player_attack(Move.new(0, ent.position, ATTACK_MOVE))
+		return
 	return
 
 # quantizes a continuous vector into integer vector
